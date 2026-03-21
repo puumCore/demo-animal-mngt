@@ -4,12 +4,12 @@
 #include <iostream>
 #include "../include/animal.h"
 #include "../include/animalrepo.h"
+#include "../include/connection_pool.h"
 #include <stdexcept>
 
 using namespace std;
 
-AnimalRepository::AnimalRepository(const string& connString)
-    : connStr(connString) {}
+AnimalRepository::AnimalRepository(ConnectionPool& pool) : pool_(pool) {}
 
 static Animal rowToAnimal(const pqxx::row& row) {
     Animal a;
@@ -23,12 +23,8 @@ static Animal rowToAnimal(const pqxx::row& row) {
 
 vector<Animal> AnimalRepository::getAll() {
     vector<Animal> animals;
-    pqxx::connection datasource(connStr);
-
-    if (!datasource.is_open())
-        throw runtime_error("Failed to open database connection");
-
-    pqxx::work txn(datasource);
+    auto datasource = pool_.acquire();
+    pqxx::work txn(*datasource);
 
     try {
         pqxx::result rows = txn.exec("SELECT id, name, breed, age, owner FROM animals ORDER BY id");
@@ -38,7 +34,6 @@ vector<Animal> AnimalRepository::getAll() {
         }
 
         txn.commit();
-
     } catch (const pqxx::sql_error& e) {
         txn.abort();
         cerr << "SQL error: "    << e.what()  << "\n";
@@ -53,12 +48,8 @@ vector<Animal> AnimalRepository::getAll() {
 }
 
 optional<Animal> AnimalRepository::getById(int id) {
-    pqxx::connection datasource(connStr);
-
-    if (!datasource.is_open())
-        throw runtime_error("Failed to open database connection");
-
-    pqxx::work txn(datasource);
+    auto datasource = pool_.acquire();
+    pqxx::work txn(*datasource);
 
     try {
         pqxx::result rows = txn.exec_params(
@@ -84,12 +75,8 @@ optional<Animal> AnimalRepository::getById(int id) {
 }
 
 Animal AnimalRepository::create(const Animal& a) {
-    pqxx::connection datasource(connStr);
-
-    if (!datasource.is_open())
-        throw runtime_error("Failed to open database connection");
-
-    pqxx::work txn(datasource);
+    auto datasource = pool_.acquire();
+    pqxx::work txn(*datasource);
 
     try {
         pqxx::result rows = txn.exec_params(
@@ -113,12 +100,8 @@ Animal AnimalRepository::create(const Animal& a) {
 }
 
 Animal AnimalRepository::update(int id, const Animal& a) {
-    pqxx::connection datasource(connStr);
-
-    if (!datasource.is_open())
-        throw runtime_error("Failed to open database connection");
-
-    pqxx::work txn(datasource);
+    auto datasource = pool_.acquire();
+    pqxx::work txn(*datasource);
 
     try {
         pqxx::result rows = txn.exec_params(
@@ -148,12 +131,8 @@ Animal AnimalRepository::update(int id, const Animal& a) {
 
 
 bool AnimalRepository::remove(int id) {
-    pqxx::connection datasource(connStr);
-
-    if (!datasource.is_open())
-        throw runtime_error("Failed to open database connection");
-
-    pqxx::work txn(datasource);
+    auto datasource = pool_.acquire();
+    pqxx::work txn(*datasource);
 
     try {
         pqxx::result rows = txn.exec_params("DELETE FROM animal WHERE id = $1 RETURNING id", id);

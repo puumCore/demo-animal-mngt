@@ -27,8 +27,8 @@ void load_env_file(const string& filepath = ".env") {
         string value = line.substr(delimiter + 1);
 
         if (value.size() >= 2 &&
-            ((value.front() == '"' && value.back() == '"') ||
-             (value.front() == '\'' && value.back() == '\''))) {
+                ((value.front() == '"' && value.back() == '"') ||
+                 (value.front() == '\'' && value.back() == '\''))) {
             value = value.substr(1, value.size() - 2);
         }
 

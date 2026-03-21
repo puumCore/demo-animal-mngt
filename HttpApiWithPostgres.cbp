@@ -12,6 +12,7 @@
 				<Option type="1" />
 				<Option compiler="gcc-msys2-mingw64" />
 				<Compiler>
+					<Add option="-std=gnu++26" />
 					<Add directory="../../../../msys64/mingw64/include" />
 				</Compiler>
 				<Linker>
@@ -39,6 +40,7 @@
 			<Option target="Debug" />
 			<Option target="Release" />
 		</UnitsGlob>
+		<Unit filename="include/ConnectionPool.h" />
 		<Unit filename="include/animal.h" />
 		<Unit filename="include/animalrepo.h" />
 		<Unit filename="include/crow_all.h" />

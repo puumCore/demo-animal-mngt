@@ -12,7 +12,7 @@ struct JsonMiddleware {
     }
 
     void after_handle(crow::request& req, crow::response& res, context& ctx) {
-        res.add_header("Content-Type", "application/json");
+        res.set_header("Content-Type", "application/json");
     }
 };
 

@@ -18,6 +18,7 @@ int main() {
     load_env_file(".env");  // call this first, before anything else
 
     const char* service_port  = getenv("SERVER_PORT");
+    const char* crow_concurrency  = getenv("HTTP_CONCURRENCY");
 
     const char* pg_host  = getenv("PG_HOST");
     const char* pg_port  = getenv("PG_PORT");
@@ -29,9 +30,14 @@ int main() {
 
     crow::App<JsonMiddleware> app;
 
-    string dbConnUrl = format("host={} port={} dbname={} user={} password={}", pg_host, pg_port, pg_db,pg_user, pg_pwd);
+    string dbConnUrl = format("host={} port={} dbname={} user={} password={} connect_timeout=5", pg_host, pg_port, pg_db,pg_user, pg_pwd);
 
-    AnimalRepository repo(dbConnUrl);
+    ConnectionPool pool(dbConnUrl, 10);
+    AnimalRepository repo(pool);
+
+    CROW_ROUTE(app, "/health")([]() {
+        return crow::response(200, R"({"status":"ok"})");
+    });
 
     CROW_ROUTE(app, "/api/v1/all").methods(crow::HTTPMethod::Get)
     ([&]() {
@@ -73,7 +79,9 @@ int main() {
         }
     });
 
-    app.port(stoi(service_port)).multithreaded().run();
+    //When you're ready for real production traffic, you can bump .concurrency(2) up to 4 or 8 depending on your expected load.
+    //Just avoid .multithreaded() which maxes out all CPU cores and triggered the original issue.
+    app.port(stoi(service_port)).concurrency(stoi(crow_concurrency)).timeout(5).run();
 
     return 0;
 }

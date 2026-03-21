@@ -4,12 +4,14 @@
 #include <vector>
 #include <optional>
 #include "animal.h"
+#include "connection_pool.h"
 
 using namespace std;
 
 class AnimalRepository {
+
 public:
-    explicit AnimalRepository(const string& connString);
+    explicit AnimalRepository(ConnectionPool& pool);
 
     vector<Animal>       getAll();
     optional<Animal>     getById(int id);
@@ -18,7 +20,7 @@ public:
     bool                 remove(int id);
 
 private:
-    string connStr;
+    ConnectionPool& pool_;
 };
 
 #endif // ANIMALSERVICE_H_INCLUDED
